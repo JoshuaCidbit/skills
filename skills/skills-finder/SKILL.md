@@ -319,3 +319,8 @@ updating.
 Say that no Verified skill was found, what was searched and the closest
 near-misses (as Preliminary candidates or "Your call"). Offer to do the task
 directly, or suggest creating their own with `npx skills init`.
+
+---
+
+Derived from `vercel-labs/skills` `find-skills` (MIT License). Security tiers
+added by JoshuaCidbit.
