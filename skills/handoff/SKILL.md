@@ -115,7 +115,8 @@ Infer the real intent and **weight each stage** accordingly:
   `git branch`), and run read-only diagnostics (test suite, build, linters)
   **when it produces evidence worth pasting**. Never write project files,
   commit, push, or run commands with side effects. The **only** files you write
-  during Stages 1–5 are `handoff.md` (§7) and, once, `SYSTEM.md` (§6.1).
+  during Stages 1–5 are `handoff.md` (§7) and, once, `SYSTEM.md` (§6.1), both
+  under `<project root>/.agents/handoff/`.
 - **Stage 6 (Apply & Verify):** Once the user approves the final contract from
   Stage 4 or 5, read-only restrictions lift: apply the file changes locally,
   run the verification commands, and report the outcome.
@@ -193,9 +194,11 @@ Omit a section only if it does not apply.
 
 ### 6.1 `SYSTEM.md` — Environment Snapshot
 
-The local agent generates `SYSTEM.md` once (project root or `~/.agents/`) from
-read-only commands and refreshes it when the user says the system changed or
-when a command output contradicts it. Contents, only what applies:
+The local agent generates `SYSTEM.md` once at
+`<project root>/.agents/handoff/SYSTEM.md` (root resolution: §7), recording
+`updated: <date>` on its first line. If it already exists, attach it as-is;
+regenerate only when the user says the system changed or when a command output
+contradicts it. Contents, only what applies:
 
 - OS + version + kernel (e.g. `uname -a`, `/etc/os-release`, `sw_vers`, `ver`)
 - package manager(s) in use (e.g. pacman/AUR helper, apt, brew, winget)
@@ -212,14 +215,25 @@ truth over its own assumptions.
 
 ## 7. `handoff.md` — Persistent State
 
-Everything that must survive a compaction or new session lives in **`handoff.md`
-at the project root**. Suggest adding it to `.gitignore` unless the user wants
-task history tracked. It is the sole **state** file this skill creates or modifies
+Both files this skill writes live in **`<project root>/.agents/handoff/`**:
+`handoff.md` and `SYSTEM.md` (§6.1). Never write at the bare project root and
+never in `~/.agents/` — state is per project.
+
+**Root resolution:** walk up from the working directory to the first ancestor
+containing `.git`, `AGENTS.md` or `.agents/`. If none exists, ask the user
+before creating one. Do not confuse `.agents/handoff/` (state) with
+`.agents/skills/handoff/` (this skill's own files).
+
+`handoff.md` holds everything that must survive a compaction or new session.
+Suggest adding `.agents/handoff/` to `.gitignore` unless the user wants task
+history tracked. It is the sole **state** file this skill creates or modifies
 (`SYSTEM.md`, §6.1, is an environment snapshot, not task state).
 
+**First turn of every invocation:** read `handoff.md` before anything else.
 Multiple concurrent tasks = **multiple blocks in the same file**, each with its
-own header. Detect tasks in `handoff.md` and **ask which one to continue** —
-never guess, never silently overwrite.
+own header. If the request matches an existing `## Task:` block, ask whether to
+resume it or open a new one — never guess, never silently duplicate a slug,
+never silently overwrite.
 
 ```markdown
 # Handoff
