@@ -20,7 +20,7 @@ Requires Node.js 22.20 or later. Skills install at project level by default;
 add `-g` for a global install.
 
 ```bash
-# Both skills, with interactive selection of what and where
+# All skills, with interactive selection of what and where
 npx skills add JoshuaCidbit/skills
 
 # One skill at a time
