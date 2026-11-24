@@ -225,15 +225,15 @@ before creating one. Do not confuse `.agents/handoff/` (state) with
 `.agents/skills/handoff/` (this skill's own files).
 
 `handoff.md` holds everything that must survive a compaction or new session.
-Suggest adding `.agents/handoff/` to `.gitignore` unless the user wants task
-history tracked. It is the sole **state** file this skill creates or modifies
-(`SYSTEM.md`, §6.1, is an environment snapshot, not task state).
+It is the sole **state** file this skill creates or modifies (`SYSTEM.md`,
+§6.1, is an environment snapshot, not task state).
 
 **First turn of every invocation:** read `handoff.md` before anything else.
 Multiple concurrent tasks = **multiple blocks in the same file**, each with its
 own header. If the request matches an existing `## Task:` block, ask whether to
 resume it or open a new one — never guess, never silently duplicate a slug,
-never silently overwrite.
+never silently overwrite. If a genuinely new task needs the same slug, suffix it
+`<slug>-2`, `<slug>-3`; never reuse an existing slug.
 
 ```markdown
 # Handoff
