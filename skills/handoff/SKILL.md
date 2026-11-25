@@ -115,14 +115,21 @@ Infer the real intent and **weight each stage** accordingly:
   `git branch`), and run read-only diagnostics (test suite, build, linters)
   **when it produces evidence worth pasting**. Never write project files,
   commit, push, or run commands with side effects. The **only** files you write
-  during Stages 1–5 are `handoff.md` (§7) and, once, `SYSTEM.md` (§6.1), both
-  under `<project root>/.agents/handoff/`.
+  during Stages 1–5 are `handoff.md` (§7) under `<project root>/.agents/handoff/`
+  and, once, the global `SYSTEM.md` (§6.1) under `~/.agents/handoff/`.
 - **Stage 6 (Apply & Verify):** Once the user approves the final contract from
   Stage 4 or 5, read-only restrictions lift: apply the file changes locally,
   run the verification commands, and report the outcome.
 - **Secret Redaction:** Never paste `.env` contents, API keys, tokens,
   credentials, or private keys into any briefing or prompt. Replace them with
   `<REDACTED_SECRET_NAME>`.
+- **Skill / agent scope:** read skills and agents only from `<root>/.agents/`.
+  Never read `~/.agents/skills/`: global skills are the user's own tooling, not
+  part of the project, and never appear in a briefing. To hand off about a global
+  skill, call it from its own directory.
+- **MCP servers** are declared in the harness config at root level; list them by
+  name as today.
+- The only file read from `$HOME` is `~/.agents/handoff/SYSTEM.md` (§6.1).
 
 Prefer evidence over recollection: an exact error trace beats "tests fail".
 
@@ -135,13 +142,18 @@ and do not count tokens. Selection is **structural**:
   (IDs, URLs, exact error strings, symbol names, versions), constraints, repo
   conventions, changed files, evidence (exact trace + version).
 - **Leave out (Stages 1–4):** conversation narrative, pleasantries, files
-  untouched by the task, and **superseded/rejected attempts** (keep rejected
-  attempts stored in `handoff.md` under `Decisions & Rejected Approaches` and
-  inject them **only** in Stage 5 per §9).
-- **Shrink order (if trimming is necessary — never cut decisions or literals):**
-  1. conversational history
-  2. untouched files, then their signatures
-  3. collapsed to paths only: first related files, then whole directories
+  untouched by the task, **superseded/rejected attempts** (keep them stored in
+  `handoff.md` under `Decisions & Rejected Approaches` and inject them **only** in
+  Stage 5 per §9), plus:
+  - `SYSTEM.md` sections whose tags do not intersect the project stack (§6.2) —
+    a Python task never carries the Node.js version;
+  - the content of skills not named in the user's request;
+  - toolchain versions that cannot affect the task.
+- **Never trim:** decisions, literal values, and the `SKILL.md` of a skill that
+  was named in the user's request (§6).
+- **Shrink order (if trimming is necessary):** 1. conversational history
+  2. untouched files, then their signatures 3. collapsed to paths only: first
+  related files, then whole directories.
 
 If it is long **because of relevant code**, that is fine and expected.
 
@@ -172,10 +184,26 @@ you actually read; if you have not read something, state it explicitly.
 <!-- what was run and what it proved: exact error/trace + version. Never a full log. -->
 
 ## Repo conventions
-<!-- AGENTS.md/CLAUDE.md rules, lint/format, stack, test command. -->
+<!-- AGENTS.md/CLAUDE.md rules, lint/format, stack, test command. "- (none)" if none -->
+
+## Agent environment
+<!-- mandatory; always filled -->
+- harness: <name> <version>
+- instruction files: AGENTS.md at <path> | none found
+- skills (project scope only): <name> — <one-line description> (<path>)
+- referenced skills: <name> -> full SKILL.md attached below | (none)
+- agents: <names> | (none)
+- MCP servers: <names> | (none)
+- project stack tags: <tags>
 
 ## System snapshot
-<!-- Read from SYSTEM.md (see §6.1). Verbatim, secrets redacted. Always included in Stage 1 and in any new-chat/model-switch packet. -->
+<!-- tag-filtered extract of ~/.agents/handoff/SYSTEM.md (§6.1, §6.2). Verbatim, secrets redacted. Included in Stage 1 and any new-chat/model-switch packet. -->
+
+## Referenced skills
+<!-- full SKILL.md per skill named in the user's request, resolved against
+     <root>/.agents/skills/*/SKILL.md frontmatter `name`. If absent from project
+     scope: report not found, do not fall back to ~/.agents/skills/. When in
+     doubt, include it. Omit the section if no skill was named. -->
 
 ## Files
 <!-- tree if useful; full content of files the task touches; signatures only for related ones; whole directories by path only -->
@@ -187,46 +215,66 @@ you actually read; if you have not read something, state it explicitly.
 <!-- git branch/HEAD/status, what is done, what is blocked -->
 
 ## Missing / uncertain
-<!-- non-blocking gaps only: technical unknowns for the web model's I_NEED, or assumptions to validate (blocking scope questions must be resolved with the user BEFORE generating Step 1) -->
+<!-- non-blocking gaps only: technical unknowns for the web model's I_NEED, or assumptions to validate (blocking scope questions must be resolved with the user BEFORE generating Step 1). Include "no AGENTS.md in <root>; conventions inferred from <source>" when true, and offer to create one -->
 ```
 
-Omit a section only if it does not apply.
+Omit a section only if it does not apply — except `## Agent environment`, which
+is mandatory in every briefing.
 
-### 6.1 `SYSTEM.md` — Environment Snapshot
+### 6.1 `SYSTEM.md` — Global Environment Snapshot
 
-The local agent generates `SYSTEM.md` once at
-`<project root>/.agents/handoff/SYSTEM.md` (root resolution: §7), recording
-`updated: <date>` on its first line. If it already exists, attach it as-is;
-regenerate only when the user says the system changed or when a command output
-contradicts it. Contents, only what applies:
+One per machine: `~/.agents/handoff/SYSTEM.md`. Project-level `SYSTEM.md` files
+no longer exist; per-project facts live in `handoff.md` (§7).
 
-- OS + version + kernel (e.g. `uname -a`, `/etc/os-release`, `sw_vers`, `ver`)
-- package manager(s) in use (e.g. pacman/AUR helper, apt, brew, winget)
-- shell, terminal, editor; display server/compositor/WM if any, with versions
-- hardware relevant to the task (GPU + driver version, etc.)
-- key paths (dotfiles repo, config dirs, scripts)
-- conventions the user has stated (config language, naming, theming pipeline)
+- First line `updated: <date>`, then `## Fingerprint` (`uname -a` first line,
+  `ID`/`BUILD_ID` from `/etc/os-release`, `nproc`).
+- **Literal-only:** every fact is a `$ command` line plus verbatim output. Never
+  paraphrase or round. Generated only by `scripts/sistema.sh`, shipped with this
+  skill; a fact no command
+  produced does not belong here. No secrets, never dump `env`.
+- The script emits: OS (`cat /etc/os-release`, `uname -a`), package manager,
+  shell/editor, display (`DISPLAY`, `XDG_SESSION_TYPE`, `WAYLAND_DISPLAY`),
+  hardware (`nproc`, `free -h`, GPU when present), and each toolchain
+  (`python3 -V`, `node -v`, `go version`, `cargo -V`, `git --version`,
+  `docker -v`) only if the binary exists.
+- Regenerate when: missing · user says the system changed · `updated:` > 30 days
+  · fingerprint mismatch. Re-check negative claims ("there is no `tests/`") with
+  `ls` at briefing time and write them `as of <date>`.
 
-Include only what applies to the task or the user's stack.
+### 6.2 Relevance Filtering
 
-Never include secrets. Never include anything that was not actually read from
-the system. Stage 1 always attaches it; the web model must treat it as ground
-truth over its own assumptions.
+Sections carry tags in an HTML comment — `<!-- tags: python, gui -->` — from
+`always` · `python` · `node` · `web` · `go` · `rust` · `gpu` · `ml` · `dataviz` ·
+`scientific` · `gui` · `container` · `db`.
+
+Include only `always` sections plus those intersecting the project's stack tags;
+do not hand-pick. Detect tags from root markers:
+
+| marker | tags |
+| --- | --- |
+| `requirements.txt`, `pyproject.toml`, `venv/`, `*.py` | `python` |
+| `package.json`, `node_modules/`, `*.ts(x)` | `node`, `web` |
+| `go.mod` / `Cargo.toml` | `go` / `rust` |
+| `Dockerfile`, `compose.yaml`, `.devcontainer/` | `container` |
+| imports `numpy`/`scipy`/`pandas` | `scientific` |
+| imports `matplotlib`/`pyqt`/`gtk`/`tkinter` | `gui`, `dataviz` |
+| imports `torch`/`tensorflow`/`sklearn`, GPU-relevant task | `gpu`, `ml` |
+
+A `stack:` override in `# Project environment` beats detection.
 
 ## 7. `handoff.md` — Persistent State
 
-Both files this skill writes live in **`<project root>/.agents/handoff/`**:
-`handoff.md` and `SYSTEM.md` (§6.1). Never write at the bare project root and
-never in `~/.agents/` — state is per project.
+Task state lives in `<root>/.agents/handoff/handoff.md`; machine state in
+`~/.agents/handoff/SYSTEM.md` (§6.1). These are the only two files this skill
+writes.
 
-**Root resolution:** walk up from the working directory to the first ancestor
-containing `.git`, `AGENTS.md` or `.agents/`. If none exists, ask the user
-before creating one. Do not confuse `.agents/handoff/` (state) with
-`.agents/skills/handoff/` (this skill's own files).
+**Root:** walk up to the first ancestor with `.git`, then `AGENTS.md`, then
+`.agents/`; never auto-resolve to `$HOME` — ask instead. Exception: working
+inside `~/.agents/skills/<skill>` makes that directory the root, declared as
+`root (explicit): ~/.agents/skills/<skill>`. Do not confuse `.agents/handoff/`
+(state) with `.agents/skills/` (skills).
 
 `handoff.md` holds everything that must survive a compaction or new session.
-It is the sole **state** file this skill creates or modifies (`SYSTEM.md`,
-§6.1, is an environment snapshot, not task state).
 
 **First turn of every invocation:** read `handoff.md` before anything else.
 Multiple concurrent tasks = **multiple blocks in the same file**, each with its
@@ -237,6 +285,16 @@ never silently overwrite. If a genuinely new task needs the same slug, suffix it
 
 ```markdown
 # Handoff
+
+# Project environment
+- root: <path>
+- explicit_root: yes|no
+- vcs: git (<branch>) | none
+- interpreter: <path> (<version>)
+- layout: <one line per dir that matters>
+- stack: <tags>            # overrides §6.2 detection
+- project facts: <no git -> manual backups; AG/ out of scope; test command; ...>
+- negative claims as of: <date>
 
 ## Task: <slug>
 - intent: <one line>
@@ -253,6 +311,9 @@ never silently overwrite. If a genuinely new task needs the same slug, suffix it
 ### Consolidated State (Answers & Evidence)
 - <overwrite/condense on each turn so this stays a clean snapshot, not an append-only log>
 
+### Raw answers
+- <optional: verbatim output pasted back from the web model>
+
 ### Open questions
 - <what is still unanswered>
 
@@ -263,6 +324,15 @@ never silently overwrite. If a genuinely new task needs the same slug, suffix it
 - [ ] STEP 2 — <goal> | done_when: <expect> | result:
 - on_stop: <last mismatch, raw stdout/stderr, filled by executor>
 ```
+
+Rules:
+
+- Nothing goes between the `## Task:` header fields and the first `###`;
+  anything pasted back from the web model goes to `### Consolidated State` or
+  `### Raw answers`.
+- Numeric literals carry the command that produced them.
+- `# Project environment` is local state, never pasted wholesale: it feeds the
+  briefing's tags and facts.
 
 When a task reaches `completed`, ask the user whether to delete its block from
 `handoff.md` or leave it marked `completed` for reference.

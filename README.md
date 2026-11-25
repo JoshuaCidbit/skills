@@ -46,8 +46,9 @@ npx skills list
   recommending it. High-risk findings are listed as discarded, never
   recommended.
 - `handoff` produces guidance only until you approve it, then executes the
-  approved plan locally on your machine: it writes `handoff.md` and `SYSTEM.md`
-  in the project and runs the plan's commands. Every step has a precondition,
+  approved plan locally on your machine: it writes the task state `handoff.md`
+  under `.agents/handoff/` in the project, plus one machine-wide environment
+  snapshot at `~/.agents/handoff/SYSTEM.md`, and runs the plan's commands. Every step has a precondition,
   an expected result and a rollback; on any mismatch it stops and reports instead
   of improvising.
 - These skills run with your agent's full permissions. Review the files before
