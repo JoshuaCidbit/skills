@@ -14,6 +14,7 @@ installs or runs anything without your explicit confirmation.
 | [`mcp-finder`](skills/mcp-finder/SKILL.md) | Finds, vets and compares MCP (Model Context Protocol) servers using the [official MCP Registry](https://registry.modelcontextprotocol.io) as the source of trust. Reviews identity, repository, package, install scripts and risk, then explains how to add a server. |
 | [`handoff`](skills/handoff/SKILL.md) | Escalates a task from the local agent to a frontier web model and brings the result back: builds a self-contained briefing plus an ordered sequence of prompts, then applies the answer as `SEARCH/REPLACE` blocks. Proposes escalating — never starts one silently — when a plan keeps failing or a high-risk area comes next. |
 | [`grilling`](skills/grilling/SKILL.md) | Grills you about a plan, decision or idea one round of questions at a time — and writes what it learns to `.agents/grilling/<slug>.md` after every round, so a compaction can't erase the shared understanding. Resumes a previous grill instead of re-asking settled questions. |
+| [`resume`](skills/resume/SKILL.md) | Drives pending work to completion when a turn stopped mid-task: takes the plan (or the last user message, which wins if the two disagree) and works every remaining item in order without stopping to ask. Stops only for something only you can supply. |
 
 ## Install
 
@@ -29,6 +30,7 @@ npx skills add JoshuaCidbit/skills --skill skills-finder
 npx skills add JoshuaCidbit/skills --skill mcp-finder
 npx skills add JoshuaCidbit/skills --skill handoff
 npx skills add JoshuaCidbit/skills --skill grilling
+npx skills add JoshuaCidbit/skills --skill resume
 ```
 
 Skills are installed into `.agents/skills/<name>` and recorded in
@@ -40,8 +42,9 @@ npx skills list
 
 ## Safety
 
-- **Nothing is installed or executed without explicit confirmation.** Both
-  skills stop and ask before acting.
+- **Nothing is installed or executed without explicit confirmation.** Each skill
+  stops and asks before acting — except `resume`, whose whole job is to carry on
+  once you have asked it to (see below).
 - `mcp-finder` never installs, runs or configures a candidate. It only reads
   public data and explains how to add a server after you choose one.
 - `skills-finder` reads every file in a skill folder at a pinned commit before
@@ -58,6 +61,10 @@ npx skills list
   `~/.agents/grilling/<slug>.md` outside one. It merges rather than
   overwrites — reversals are kept as revisions, never erased — and it asks
   before resuming a stored grill or discarding a completed one.
+- `resume` is user-invoked only: nothing runs until you call it by name. Once
+  invoked it works the remaining items without stopping to ask, but it still
+  stops for anything only you can supply — a credential, a choice between two
+  valid designs, or permission for a destructive action.
 - These skills run with your agent's full permissions. Review the files before
   keeping them.
 
@@ -69,7 +76,8 @@ skill from [vercel-labs/skills](https://github.com/vercel-labs/skills)
 the same approach to MCP servers. `handoff` is original work by JoshuaCidbit.
 `grilling` is a derivative of the `grilling` skill by Matt Pocock
 ([mattpocock/skills](https://github.com/mattpocock/skills), MIT License);
-persistent round-by-round state was added by JoshuaCidbit. See [LICENSE](LICENSE).
+persistent round-by-round state was added by JoshuaCidbit. `resume` is original
+work by JoshuaCidbit. See [LICENSE](LICENSE).
 
 ## License
 
