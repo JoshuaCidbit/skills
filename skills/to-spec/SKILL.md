@@ -1,7 +1,6 @@
 ---
 name: to-spec
 description: "Synthesize the current conversation and codebase context into a spec written to `.scratch/<feature>/spec.md`."
-disable-model-invocation: true
 ---
 
 This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user; synthesize what you already know and flag open assumptions inline.

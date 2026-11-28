@@ -1,7 +1,6 @@
 ---
 name: to-tickets
 description: "Break a spec or plan into vertical-slice tickets with blocking edges under `.scratch/<feature>/issues/`."
-disable-model-invocation: true
 ---
 
 # To Tickets

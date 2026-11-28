@@ -1,7 +1,6 @@
 ---
 name: implement-spec
 description: "Implement `.scratch/<feature>/spec.md` and its tickets using TDD slices, an integration branch, and final code review."
-disable-model-invocation: true
 ---
 
 You have been provided a spec (`.scratch/<feature>/spec.md`) and tickets (`.scratch/<feature>/issues/*.md`, or issues on a tracker if explicitly used) describing how to implement the spec.
