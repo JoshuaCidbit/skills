@@ -10,7 +10,7 @@ You were invoked because a turn ended with work still pending. The task is every
 
 ## Drive it
 
-Drive the remaining work to the end. A step flows straight into the next: it is complete when its result is in hand, and the next one starts in the same turn. Work silently through the steps, apart from the `[flow]` phase line; the report waits until the run is over.
+Drive the remaining work to the end. A step flows straight into the next: it is complete when its result is in hand, and the next one starts in the same turn. Work silently through the steps (preserving the `[flow] fase N · gate pendiente: X` status line when `opencode-flow` is active); the report waits until the run is over.
 
 - Every pending item gets addressed, in order.
 - Verified means the real command ran and you read its full output — or the edited file was re-read in full and checked against the instruction or spec.
